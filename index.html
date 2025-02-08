@@ -3,22 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Music Player</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Music App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #282c36;
+            color: white;
+        }
+
+        .container {
+            margin-top: 50px;
+        }
+
+        input, button {
+            padding: 10px;
+            margin: 10px;
+        }
+
+        button {
+            cursor: pointer;
+            background-color: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #e84118;
+        }
+
+        #results {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            cursor: pointer;
+            padding: 10px;
+            background-color: #353b48;
+            margin: 5px;
+            border-radius: 5px;
+        }
+
+        .result-item:hover {
+            background-color: #40739e;
+        }
+    </style>
 </head>
 <body>
-    <div class="player">
-        <div class="track-info">
-            <span id="track-title">Track Title</span>
-            <span id="track-artist">Artist Name</span>
-        </div>
-        <audio id="audio" src=""></audio>
-        <div class="controls">
-            <button id="prev">Previous</button>
-            <button id="play-pause">Play</button>
-            <button id="next">Next</button>
-        </div>
+    <div class="container">
+        <h1>Music App</h1>
+        <input type="text" id="searchInput" placeholder="Search for music...">
+        <button onclick="searchMusic()">Search</button>
+        <div id="results"></div>
+        <audio id="audioPlayer" controls></audio>
     </div>
-    <script src="script.js"></script>
+
+    <script>
+        async function searchMusic() {
+            const query = document.getElementById("searchInput").value;
+            if (!query) return alert("Please enter a search query!");
+
+            const response = await fetch(`http://127.0.0.1:5000/search?query=${encodeURIComponent(query)}`);
+            const results = await response.json();
+
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = "";
+
+            results.forEach(song => {
+                if (song.videoId) {
+                    const div = document.createElement("div");
+                    div.className = "result-item";
+                    div.innerText = song.title + " - " + song.artists[0].name;
+                    div.onclick = () => playMusic(song.videoId);
+                    resultsDiv.appendChild(div);
+                }
+            });
+        }
+
+        async function playMusic(videoId) {
+            const response = await fetch(`http://127.0.0.1:5000/stream?video_id=${videoId}`);
+            const data = await response.json();
+
+            const audioPlayer = document.getElementById("audioPlayer");
+            audioPlayer.src = data.stream_url;
+            audioPlayer.play();
+        }
+    </script>
 </body>
 </html>
